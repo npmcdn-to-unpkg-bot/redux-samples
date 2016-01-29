@@ -1,0 +1,270 @@
+<!-- redux without react -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>3 redux</title>
+
+    <!--  redux -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.0.6/redux.js" charset="utf-8"></script>
+    <!--  testing with expect.js -->
+    <script src="https://npmcdn.com/expect/umd/expect.min.js"></script>
+
+    <!--  react -->
+    <script src="https://fb.me/react-0.14.6.js"></script>
+    <script src="https://fb.me/react-dom-0.14.6.js"></script>
+
+    <!--  babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+
+    <!--  gridlex -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gridlex/2.0.8/gridlex.min.css">
+
+    <script src="https://wzrd.in/standalone/deep-freeze@latest" charset="utf-8"></script>
+  </head>
+  <body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+      // const addCounter = (list) => {
+      //   return [...list, 0];
+      // };
+      //
+      // const removeCounter = (list, index) => {
+      //   return [
+      //     ...list.slice(0, index),
+      //     ...list.slice(index + 1)
+      //   ];
+      // };
+      //
+      // const incrementCounter = (list, index) => {
+      //   return [
+      //     ...list.slice(0, index),
+      //     list[index] + 1,
+      //     ...list.slice(index + 1)
+      //   ];
+      // };
+
+      // if one reducer calls another reducer - this is reducer composition
+      //
+      const todo = (state, action) => {
+        switch (action.type) {
+          case 'ADD_TODO':
+            return {
+              id: action.id,
+              text: action.text,
+              completed: false
+            };
+            break;
+          case 'TOGGLE_TODO':
+            if (state.id != action.id) {
+                return state;
+            }
+
+            return {
+              ...state,
+              completed: !state.completed
+            };
+            break;
+          default:
+            return state;
+        }
+      }
+
+      // reducer, update logic, how next state are calculated
+      const todos = (state = [], action) => {
+        switch (action.type) {
+          case 'ADD_TODO':
+            return [...state,
+              todo(undefined, action)
+            ];
+            break;
+          case 'TOGGLE_TODO':
+            return state.map(t => todo(t, action));
+            break;
+          default:
+            return state;
+        }
+      };
+
+      //if we want to store more information
+      //4ex which todos are currently visible
+      //adding to reducer new dimetion by separating concerns among reducers
+
+      const visibilityFilter = (state = 'SHOW_ALL', action) => {
+        switch(action.type) {
+          case 'SET_VISIBILITY_FILTER':
+            return action.filter;
+          default:
+            return state;
+        }
+      };
+
+      //composition reducers
+      // const todoApp = (state = {}, action) => {
+      //   return {
+      //     todos: todos(state.todos,action),
+      //     visibilityFilter: visibilityFilter(state.visibilityFilter, action)
+      //   };
+      // };
+
+      // same thing only with redux features
+      const { combineReducers } = Redux;
+      const todoApp = combineReducers({
+        todos,
+        visibilityFilter
+      });
+
+      const { createStore } = Redux;
+      const store = createStore(todoApp);
+
+      var TodoApp = React.createClass({
+        getInitialState: function() {
+          return {
+            inputValue: ""
+          }
+        },
+        onClickButton: function() {
+          store.dispatch({
+            type: 'ADD_TODO',
+            id: 0,
+            text: this.state.inputValue
+          });
+          this.setState({inputValue: ""})
+          render();
+        },
+        change: function(evt) {
+          this.setState({inputValue: evt.target.value});
+
+          console.log(this.state.inputValue);
+        },
+        render: function() {
+          var listTodos = this.props.list.todos.map((todo) => {
+            return (
+              <li>{todo.text}</li>
+            );
+          });
+
+          return (
+            <div>
+              <input type='text'  value={this.state.inputValue} onChange={this.change} />
+              <input type='submit' value='Add' onClick={this.onClickButton}/>
+              <br />
+              <ul>{listTodos}</ul>
+            </div>
+          )
+        }
+      });
+
+      const render = () => {
+        ReactDOM.render(
+          <TodoApp list={store.getState()}/>,
+          document.getElementById('root')
+        )
+      };
+
+      store.subscribe(render);
+      render();
+
+      const testToggleTodo = () => {
+        const stateBefore = [
+          {
+            id: 0,
+            text: 'learn redux',
+            completed: false
+          },
+          {
+            id: 1,
+            text: 'go shopping',
+            completed: false
+          }
+        ];
+        const action = {
+          type: 'TOGGLE_TODO',
+          id: 1
+        };
+        const stateAfter = [
+          {
+            id: 0,
+            text: 'learn redux',
+            completed: false
+          },
+          {
+            id: 1,
+            text: 'go shopping',
+            completed: true
+          }
+        ];
+
+        deepFreeze(stateBefore);
+        deepFreeze(action);
+
+        expect(
+          todos(stateBefore, action)
+        ).toEqual(stateAfter);
+      };
+      testToggleTodo();
+      const testAddTodo = () => {
+        const stateBefore = [];
+        const action = {
+          type: 'ADD_TODO',
+          id: 0,
+          text: 'learn redux'
+        };
+        const stateAfter = [
+          {
+            id: 0,
+            text: 'learn redux',
+            completed: false
+          }
+        ];
+
+        deepFreeze(stateBefore);
+        deepFreeze(action);
+
+        expect(
+          todos(stateBefore, action)
+        ).toEqual(stateAfter);
+      };
+      testAddTodo();
+      // const testIncrementCounter = () => {
+      //   const listBefore = [0, 10, 20];
+      //   const listAfter = [0, 11, 20];
+      //
+      //   deepFreeze(listBefore);
+      //
+      //   expect(
+      //     incrementCounter(listBefore, 1)
+      //   ).toEqual(listAfter);
+      // };
+      // testIncrementCounter();
+      // const testRemoveCounter = () => {
+      //   const listBefore = [1, 2, 3, 4];
+      //   const listAfter = [1, 2, 4];
+      //
+      //   deepFreeze(listBefore);
+      //
+      //   expect(
+      //     removeCounter(listBefore, 2)
+      //   ).toEqual(listAfter);
+      // };
+      // testRemoveCounter();
+      // const testAddCounter = () => {
+      //   const listBefore = [];
+      //   const listAfter = [0];
+      //
+      //   deepFreeze(listBefore);
+      //
+      //   expect(
+      //     addCounter(listBefore)
+      //   ).toEqual(listAfter);
+      // };
+      // testAddCounter();
+      console.log('All tests passed.');
+
+    </script>
+  </body>
+</html>
