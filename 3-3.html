@@ -119,18 +119,21 @@
               <br />
               <ul>
                 {this.props.todos.map((todo) => {
+
+                  console.log();
+                  console.log();
+                  console.log('TODOS');
+                  console.log(this.props.todos);
+                  console.log();
+                  console.log('TODO');
+                  console.log(todo);
+
                   return(
-                    <li key={todo.id} onClick={() => {
-                      store.dispatch({
-                        type: 'TOGGLE_TODO',
-                        id: todo.id
-                      });
-                    }}
-                    style={{textDecoration: todo.completed ? 'line-through' : 'none'}}>
-                      <div className="notification is-success title is-2">
+                    <li key={todo.id} ref={(node) => {console.log(todo.id); } }>
+                      <div>
                         {todo.text}
                       </div>
-                      {/* <input className='input' type='submit' value='Done'/> */}
+                      <input className='input' type='submit' value='Done'/>
                     </li>
                   )
                 })}
