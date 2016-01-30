@@ -103,6 +103,8 @@
       var TodoApp = React.createClass({
         render: function() {
           this.list = {};
+          console.log("RENDERING");
+
           return (
             <div>
               <input type='text' className='input' ref = {node => {this.input = node}} />
@@ -116,16 +118,25 @@
               }}/>
               <br />
               <ul>
-                {this.props.todos.map(todo =>
-                  <li key={todo.id} ref = {node => {this.list.push(node)}}>
-                    <div>
-                      {todo.text}
-                    </div>
-                    <input className='input' type='submit' value='Done' onClick={() => {
-                      this.list[todo.id].style.textDecoration = 'line-through';
-                    }}/>
-                  </li>
-                )}
+                {this.props.todos.map((todo) => {
+
+                  console.log();
+                  console.log();
+                  console.log('TODOS');
+                  console.log(this.props.todos);
+                  console.log();
+                  console.log('TODO');
+                  console.log(todo);
+
+                  return(
+                    <li key={todo.id} ref={(node) => {console.log(todo.id); } }>
+                      <div>
+                        {todo.text}
+                      </div>
+                      <input className='input' type='submit' value='Done'/>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )
